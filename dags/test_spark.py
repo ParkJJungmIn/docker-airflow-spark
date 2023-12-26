@@ -57,8 +57,14 @@ def naver_spark():
     csv_file_path = "s3a://data-lake/bronze/eventsim.csv"
     df = spark.read.csv(csv_file_path, header=True, inferSchema=True)
 
+    
+
     # 'ts' 필드를 날짜 형식으로 변환
     df = df.withColumn("date", to_date((col("ts") / 1000).cast(TimestampType())))
+
+    # 날짜별로 데이터를 분할하고 Parquet으로 저장
+    output_base_path = "s3a://data-lake/silver/eventsim/"
+    df.write.partitionBy("date").parquet(output_base_path)
 
     spark.stop()
 
